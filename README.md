@@ -1,2 +1,2 @@
-# neom_posts
-neom_posts
+# neom_video_editor
+Video Editor Functionalities for Open Neom.

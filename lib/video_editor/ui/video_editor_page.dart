@@ -13,29 +13,33 @@ import 'package:neom_commons/commons/utils/constants/app_translation_constants.d
 import 'package:neom_core/core/app_config.dart';
 import 'package:neom_core/core/app_properties.dart';
 import 'package:neom_core/core/data/implementations/user_controller.dart';
+import 'package:neom_core/core/domain/use_cases/post_upload_service.dart';
 import 'package:neom_core/core/utils/constants/core_constants.dart';
 import 'package:neom_core/core/utils/enums/user_role.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_editor/video_editor.dart';
 
-import '../post_upload_controller.dart';
 import 'video_crop_page.dart';
 
-class StatefulVideoEditor extends StatefulWidget {
-  const StatefulVideoEditor({super.key, required this.file});
+class VideoEditorPage extends StatefulWidget {
 
-  final File file;
+  const VideoEditorPage({super.key, required this.file});
+  final File? file;
 
   @override
-  State<StatefulVideoEditor> createState() => _StatefulVideoEditorState();
+  State<VideoEditorPage> createState() => _VideoEditorPageState();
 }
 
-class _StatefulVideoEditorState extends State<StatefulVideoEditor> {
+class _VideoEditorPageState extends State<VideoEditorPage> {
   final _exportingProgress = ValueNotifier<double>(0.0);
   final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
+  final userController = Get.find<UserController>();
+  final postUploadServiceImpl = Get.find<PostUploadService>();
+
   late final VideoEditorController _controller;
+
   File originalVideo = File('');
   File editedVideo = File('');
   int startTrim = 0;
@@ -46,7 +50,6 @@ class _StatefulVideoEditorState extends State<StatefulVideoEditor> {
   bool hadCropChanges = false;
   bool hadTrimChanges = false;
   int maxDurationInSeconds = 0;
-  PostUploadController? uploadController;
 
   int totalSteps = 0;
   int completedSteps = 0;
@@ -55,7 +58,7 @@ class _StatefulVideoEditorState extends State<StatefulVideoEditor> {
   void initState() {
     super.initState();
 
-    final userController = Get.find<UserController>();
+
     maxDurationInSeconds = userController.user.userRole == UserRole.subscriber
         ? CoreConstants.userMaxVideoDurationInSeconds : CoreConstants.adminMaxVideoDurationInSeconds;
 
@@ -63,16 +66,10 @@ class _StatefulVideoEditorState extends State<StatefulVideoEditor> {
       maxDurationInSeconds = CoreConstants.verifiedMaxVideoDurationInSeconds;
     }
 
-    originalVideo = widget.file;
-    editedVideo = widget.file;
-
-    initializeVideoEditorController(editedVideo);
-
-    if (Get.isRegistered<PostUploadController>()) {
-      uploadController = Get.find<PostUploadController>();
-    } else {
-      uploadController = PostUploadController();
-      Get.put(uploadController);
+    if(widget.file != null) {
+      originalVideo = widget.file!;
+      editedVideo = widget.file!;
+      initializeVideoEditorController(editedVideo);
     }
   }
 
@@ -114,7 +111,7 @@ class _StatefulVideoEditorState extends State<StatefulVideoEditor> {
     AppConfig.logger.i('Processing video from path ${_controller.file.path}');
 
     File? processedVideo = _controller.file;
-    String editedClipName = '${uploadController?.profile.name.split(' ').first.toLowerCase()}_${AppProperties.getClipName}_${DateTime.now().millisecondsSinceEpoch}';
+    String editedClipName = '${userController.profile.name.split(' ').first.toLowerCase()}_${AppProperties.getClipName}_${DateTime.now().millisecondsSinceEpoch}';
 
     try {
       await _controller.video.pause();
@@ -171,7 +168,7 @@ class _StatefulVideoEditorState extends State<StatefulVideoEditor> {
       _isExporting.value = false;
 
       if (editedVideo.path.isNotEmpty) {
-        uploadController?.setProcessedVideo(XFile(editedVideo.path));
+        postUploadServiceImpl.setProcessedVideo(XFile(editedVideo.path));
       } else {
         AppConfig.logger.e("⛔ Archivo exportado es inválido o vacío.");
         AppUtilities.showSnackBar(message: "Hubo un error en la exportación.");
@@ -342,9 +339,9 @@ class _StatefulVideoEditorState extends State<StatefulVideoEditor> {
                 processVideo();
               } else {
                 if(editedVideo.existsSync()) {
-                  uploadController?.setProcessedVideo(XFile(editedVideo.path));
+                  postUploadServiceImpl.setProcessedVideo(XFile(editedVideo.path));
                 } else {
-                  uploadController?.setProcessedVideo(XFile(originalVideo.path));
+                  postUploadServiceImpl.setProcessedVideo(XFile(originalVideo.path));
                 }
 
               }
