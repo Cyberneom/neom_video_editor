@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:fraction/fraction.dart';
 import 'package:get/get.dart';
-import 'package:neom_commons/commons/ui/theme/app_color.dart';
-import 'package:neom_commons/commons/ui/theme/app_theme.dart';
-import 'package:neom_commons/commons/ui/widgets/appbar_child.dart';
-import 'package:neom_commons/commons/utils/constants/app_translation_constants.dart';
+import 'package:neom_commons/ui/theme/app_color.dart';
+import 'package:neom_commons/ui/theme/app_theme.dart';
+import 'package:neom_commons/ui/widgets/appbar_child.dart';
+import 'package:neom_commons/utils/constants/translations/app_translation_constants.dart';
 import 'package:video_editor/video_editor.dart';
+
+import '../utils/constants/video_editor_translation_constants.dart';
 
 class VideoCropPage extends StatelessWidget {
   const VideoCropPage({super.key, required this.controller});
@@ -16,7 +18,7 @@ class VideoCropPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.main50,
-      appBar: AppBarChild(title: AppTranslationConstants.clipEditor.tr),
+      appBar: AppBarChild(title: VideoEditorTranslationConstants.clipEditor.tr),
       body: Container(
         decoration: AppTheme.appBoxDecoration,
         child: Column(

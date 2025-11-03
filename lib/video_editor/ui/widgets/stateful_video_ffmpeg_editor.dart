@@ -1,3 +1,4 @@
+//WAITING FOR LIBRARIES TO FIX SOME BUGS WHEN PROCESSING
 // import 'dart:io';
 //
 // // import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
@@ -44,11 +45,11 @@
 //   void initState() {
 //     super.initState();
 //
-//     final userController = Get.find<UserController>();
-//     maxDurationInSeconds = userController.user.userRole == UserRole.subscriber
+//     final userController = Get.find<UserService>();
+//     maxDurationInSeconds = userServiceImpl.user.userRole == UserRole.subscriber
 //         ? AppConstants.userMaxVideoDurationInSeconds : AppConstants.adminMaxVideoDurationInSeconds;
 //
-//     if(userController.user.isVerified) {
+//     if(userServiceImpl.user.isVerified) {
 //       maxDurationInSeconds = AppConstants.verifiedMaxVideoDurationInSeconds;
 //     }
 //

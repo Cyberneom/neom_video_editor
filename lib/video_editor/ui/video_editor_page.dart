@@ -4,21 +4,23 @@ import 'dart:io';
 import 'package:easy_video_editor/easy_video_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:neom_commons/commons/ui/theme/app_color.dart';
-import 'package:neom_commons/commons/ui/theme/app_theme.dart';
-import 'package:neom_commons/commons/ui/widgets/appbar_child.dart';
-import 'package:neom_commons/commons/utils/app_utilities.dart';
-import 'package:neom_commons/commons/utils/constants/app_translation_constants.dart';
-import 'package:neom_core/core/app_config.dart';
-import 'package:neom_core/core/app_properties.dart';
-import 'package:neom_core/core/data/implementations/user_controller.dart';
-import 'package:neom_core/core/domain/use_cases/post_upload_service.dart';
-import 'package:neom_core/core/utils/constants/core_constants.dart';
-import 'package:neom_core/core/utils/enums/user_role.dart';
+import 'package:neom_commons/ui/theme/app_color.dart';
+import 'package:neom_commons/ui/theme/app_theme.dart';
+import 'package:neom_commons/ui/widgets/appbar_child.dart';
+import 'package:neom_commons/utils/app_utilities.dart';
+import 'package:neom_commons/utils/constants/translations/app_translation_constants.dart';
+import 'package:neom_commons/utils/constants/translations/common_translation_constants.dart';
+import 'package:neom_commons/utils/datetime_utilities.dart';
+import 'package:neom_core/app_config.dart';
+import 'package:neom_core/app_properties.dart';
+import 'package:neom_core/domain/use_cases/media_upload_service.dart';
+import 'package:neom_core/domain/use_cases/user_service.dart';
+import 'package:neom_core/utils/constants/core_constants.dart';
+import 'package:neom_core/utils/enums/user_role.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_editor/video_editor.dart';
 
+import '../utils/constants/video_editor_translation_constants.dart';
 import 'video_crop_page.dart';
 
 class VideoEditorPage extends StatefulWidget {
@@ -35,8 +37,8 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
   final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
-  final userController = Get.find<UserController>();
-  final postUploadServiceImpl = Get.find<PostUploadService>();
+  final userServiceImpl = Get.find<UserService>();
+  final mediaUploadServiceImpl = Get.find<MediaUploadService>();
 
   late final VideoEditorController _controller;
 
@@ -59,10 +61,10 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
     super.initState();
 
 
-    maxDurationInSeconds = userController.user.userRole == UserRole.subscriber
+    maxDurationInSeconds = userServiceImpl.user.userRole == UserRole.subscriber
         ? CoreConstants.userMaxVideoDurationInSeconds : CoreConstants.adminMaxVideoDurationInSeconds;
 
-    if(userController.user.isVerified) {
+    if(userServiceImpl.user.isVerified) {
       maxDurationInSeconds = CoreConstants.verifiedMaxVideoDurationInSeconds;
     }
 
@@ -111,7 +113,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
     AppConfig.logger.i('Processing video from path ${_controller.file.path}');
 
     File? processedVideo = _controller.file;
-    String editedClipName = '${userController.profile.name.split(' ').first.toLowerCase()}_${AppProperties.getClipName}_${DateTime.now().millisecondsSinceEpoch}';
+    String editedClipName = '${userServiceImpl.profile.name.split(' ').first.toLowerCase()}_${AppProperties.getClipName}_${DateTime.now().millisecondsSinceEpoch}';
 
     try {
       await _controller.video.pause();
@@ -164,11 +166,12 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
       //   processedVideo = await cropVideoViaBuilder(processedVideo?.path ?? '', editedClipName);
       //   increaseProgressPercentage();
       // }
-      editedVideo = File(processedVideo?.path ?? '');
+
+      if(processedVideo != null) editedVideo = processedVideo;
       _isExporting.value = false;
 
       if (editedVideo.path.isNotEmpty) {
-        postUploadServiceImpl.setProcessedVideo(XFile(editedVideo.path));
+        mediaUploadServiceImpl.setProcessedVideo(editedVideo);
       } else {
         AppConfig.logger.e("⛔ Archivo exportado es inválido o vacío.");
         AppUtilities.showSnackBar(message: "Hubo un error en la exportación.");
@@ -192,7 +195,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
           builder: (context) => AlertDialog(
             backgroundColor: AppColor.getMain(),
             title: Text(AppProperties.getAppName()),
-            content:  Text(AppTranslationConstants.wantToCloseEditor.tr),
+            content:  Text(CommonTranslationConstants.wantToCloseEditor.tr),
             actions: <Widget>[
               TextButton(
                 child: Text(AppTranslationConstants.no.tr,
@@ -213,7 +216,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
       child: Scaffold(
         backgroundColor: AppColor.main50,
         appBar: AppBarChild(
-            title: (AppTranslationConstants.videoEditor.tr),
+            title: (VideoEditorTranslationConstants.videoEditor.tr),
             actionWidgets: getAppBarActions()),
         body: _controller.initialized
             ? Container(
@@ -289,7 +292,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
                                 ),
                                 const SizedBox(height: 10),
                                 Text(
-                                  '${AppTranslationConstants.processingVideo.tr} ${(animatedValue * 100).ceil()}%',
+                                  '${CommonTranslationConstants.processingVideo.tr} ${(animatedValue * 100).ceil()}%',
                                   style: const TextStyle(fontSize: 14, color: Colors.white),
                                 ),
                               ],
@@ -312,7 +315,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
     return IconButton(
       onPressed: () => Navigator.of(context).pop(),
       icon: const Icon(Icons.close),
-      tooltip: AppTranslationConstants.leaveVideoEditor,
+      tooltip: VideoEditorTranslationConstants.leaveVideoEditor,
     );
   }
 
@@ -331,7 +334,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
             );
           },
           icon: const Icon(Icons.crop),
-          tooltip: AppTranslationConstants.openCropPage.tr,
+          tooltip: CommonTranslationConstants.openCropPage.tr,
         ),
           IconButton(
             onPressed: () async {
@@ -339,16 +342,14 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
                 processVideo();
               } else {
                 if(editedVideo.existsSync()) {
-                  postUploadServiceImpl.setProcessedVideo(XFile(editedVideo.path));
+                  mediaUploadServiceImpl.setProcessedVideo(editedVideo);
                 } else {
-                  postUploadServiceImpl.setProcessedVideo(XFile(originalVideo.path));
+                  mediaUploadServiceImpl.setProcessedVideo(originalVideo);
                 }
-
               }
-
             },
             icon: const Icon(Icons.arrow_forward),
-            tooltip: AppTranslationConstants.processVideo.tr,
+            tooltip: CommonTranslationConstants.processVideo.tr,
           ),
       ],),
 
@@ -381,7 +382,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
                 children: [
-                  Text('${AppUtilities.getDurationInMinutes(Duration(seconds: pos.toInt()).inMilliseconds)} / ${AppUtilities.getDurationInMinutes(endTrim)}',),
+                  Text('${DateTimeUtilities.getDurationInMinutes(Duration(seconds: pos.toInt()).inMilliseconds)} / ${DateTimeUtilities.getDurationInMinutes(endTrim)}',),
                   const Expanded(child: SizedBox()),
                   AnimatedOpacity(
                     opacity: _controller.isTrimming ? 1 : 0,
@@ -389,7 +390,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
                     child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(AppUtilities.getDurationInMinutes(endTrim-startTrim)),
+                          Text(DateTimeUtilities.getDurationInMinutes(endTrim-startTrim)),
                         ]
                     ),
                   ),
