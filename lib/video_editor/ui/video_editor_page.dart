@@ -3,7 +3,7 @@ import 'dart:io';
 // import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:easy_video_editor/easy_video_editor.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+import 'package:sint/sint.dart';
 import 'package:neom_commons/ui/theme/app_color.dart';
 import 'package:neom_commons/ui/theme/app_theme.dart';
 import 'package:neom_commons/ui/widgets/appbar_child.dart';
@@ -37,8 +37,8 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
   final _isExporting = ValueNotifier<bool>(false);
   final double height = 60;
 
-  final userServiceImpl = Get.find<UserService>();
-  final mediaUploadServiceImpl = Get.find<MediaUploadService>();
+  final userServiceImpl = Sint.find<UserService>();
+  final mediaUploadServiceImpl = Sint.find<MediaUploadService>();
 
   late final VideoEditorController _controller;
 

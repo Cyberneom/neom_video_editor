@@ -3,7 +3,7 @@
 //
 // // import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 // import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
+// import 'package:sint/sint.dart';
 // import 'package:image_picker/image_picker.dart';
 // import 'package:neom_commons/neom_commons.dart';
 // import 'package:video_editor/video_editor.dart';
@@ -45,7 +45,7 @@
 //   void initState() {
 //     super.initState();
 //
-//     final userController = Get.find<UserService>();
+//     final userController = Sint.find<UserService>();
 //     maxDurationInSeconds = userServiceImpl.user.userRole == UserRole.subscriber
 //         ? AppConstants.userMaxVideoDurationInSeconds : AppConstants.adminMaxVideoDurationInSeconds;
 //
@@ -57,11 +57,11 @@
 //
 //     initializeVideoEditorController(editedVideo);
 //
-//     if (Get.isRegistered<PostUploadController>()) {
-//       uploadController = Get.find<PostUploadController>();
+//     if (Sint.isRegistered<PostUploadController>()) {
+//       uploadController = Sint.find<PostUploadController>();
 //     } else {
 //       uploadController = PostUploadController();
-//       Get.put(uploadController);
+//       Sint.put(uploadController);
 //     }
 //   }
 //

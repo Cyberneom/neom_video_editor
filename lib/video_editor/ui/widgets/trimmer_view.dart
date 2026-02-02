@@ -1,6 +1,6 @@
 //WAITING FOR LIBRARIES TO FIX SOME BUGS WHEN PROCESSING
 // import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
+// import 'package:sint/sint.dart';
 // import 'package:neom_commons/core/utils/app_color.dart';
 // import 'package:neom_commons/core/utils/constants/app_constants.dart';
 // import 'package:neom_commons/core/utils/constants/app_page_id_constants.dart';
@@ -13,7 +13,7 @@
 //
 //   @override
 //   Widget build(BuildContext context) {
-//     return GetBuilder<PostUploadController>(
+//     return SintBuilder<PostUploadController>(
 //       id: AppPageIdConstants.upload,
 //       init: PostUploadController(),
 //       builder: (_) => Obx(()=>Center(
