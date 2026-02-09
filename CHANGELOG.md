@@ -1,26 +1,68 @@
-### 1.4.0 Initial Release & Foundational Video Editing Capabilities
-This marks the initial official release (v1.0.0) of neom_video_editor as a new, independent module within the Open Neom ecosystem. This module is introduced to provide essential video editing functionalities, laying the groundwork for a comprehensive media manipulation suite.
+# Changelog
 
-Key Highlights of this Release:
+All notable changes to neom_video_editor will be documented in this file.
 
-New Module Introduction:
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-neom_video_editor is now a dedicated module for all video editing processes, ensuring a clear separation of concerns from other media-related functionalities (e.g., neom_media_upload).
+## [1.2.0] - 2025-02-08
 
-This aligns with Open Neom's modular architecture, promoting specialized development and maintainability.
+### Changed
+- **Updated README**: Complete rewrite with ambitious ROADMAP 2026 for professional-grade video editing
+- Version bump to align with ecosystem releases
 
-Core Video Editing Features:
+### Documentation
+- Added comprehensive ROADMAP 2026 with quarterly milestones
+- Added competitive analysis vs CapCut, InShot, Premiere Rush
+- Added technical architecture goals
+- Added performance targets
+- Added export options and platform presets documentation
 
-Video Trimming: Implements precise control over video duration, allowing users to select start and end points for their clips.
+### ROADMAP 2026 Highlights
+- Q1: Core editing (multi-track timeline, keyframes, speed control)
+- Q2: Visual effects & filters (50+ LUTs, color correction, effects)
+- Q3: Audio & sound design (music library, beat detection, voice effects)
+- Q4: AI features (auto-cut, auto-caption, background removal)
 
-Video Cropping: Provides functionality to adjust the aspect ratio and frame of video content.
+## [1.1.0] - Previous Release
 
-Utilizes external libraries like video_editor, easy_video_editor, and video_compress for robust video processing.
+### Added
+- Improved trimming precision
+- Better progress indication during export
+- User role-based video duration limits
 
-Future-Proof Design:
+### Fixed
+- Export stability improvements
+- Memory optimization for longer videos
 
-While this version focuses on foundational trimming and cropping, the module is designed with extensibility in mind. It is envisioned to evolve into an advanced video editing platform, similar to popular social media tools (e.g., TikTok, Instagram Reels), by incorporating filters, effects, text overlays, and more in future releases.
+## [1.0.0] - Initial Release
 
-Integration with Core Open Neom Modules:
+### Added
 
-Built upon neom_core for foundational services (like UserService for user role-based limits on video duration) and neom_commons for reusable UI components and utilities, ensuring seamless integration within the ecosystem.akes the module easier to understand, debug, and extend for future features.ental services and data models, and `neom_commons` for shared UI components, ensuring consistency and efficiency across the platform.
+#### Module Introduction
+- Dedicated module for video editing processes
+- Clear separation from media upload and selection modules
+- Modular architecture for easy extension
+
+#### Core Features
+- **Video Trimming**: Precise start/end point selection
+  - Visual timeline interface
+  - Frame-accurate trimming
+  - Real-time preview
+- **Video Cropping**: Aspect ratio adjustment
+  - Square (1:1)
+  - Portrait (9:16)
+  - Landscape (16:9)
+  - Custom ratios
+- **Progress Indication**: Real-time export tracking
+- **Role-Based Limits**: Configurable video duration by user role
+
+#### Technical
+- Uses `video_editor` for UI components
+- Uses `easy_video_editor` for FFmpeg processing
+- Uses `video_compress` for output optimization
+- Built on `neom_core` and `neom_commons`
+
+#### Future-Proof Design
+- Extensible architecture for filters, effects, and overlays
+- Designed to evolve into TikTok/CapCut-level editing suite
