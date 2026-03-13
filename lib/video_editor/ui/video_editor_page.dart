@@ -1,7 +1,6 @@
-import 'dart:io';
-
 // import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:easy_video_editor/easy_video_editor.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:sint/sint.dart';
 import 'package:neom_commons/ui/theme/app_color.dart';
@@ -193,7 +192,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
         return (await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: AppColor.getMain(),
+            backgroundColor: AppColor.scaffold,
             title: Text(AppProperties.getAppName()),
             content:  Text(CommonTranslationConstants.wantToCloseEditor.tr),
             actions: <Widget>[
@@ -214,7 +213,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
         )) ?? false;
       },
       child: Scaffold(
-        backgroundColor: AppColor.main50,
+        backgroundColor: AppColor.scaffold,
         appBar: AppBarChild(
             title: (VideoEditorTranslationConstants.videoEditor.tr),
             actionWidgets: getAppBarActions()),

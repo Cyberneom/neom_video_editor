@@ -17,7 +17,7 @@ class VideoCropPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColor.main50,
+      backgroundColor: AppColor.scaffold,
       appBar: AppBarChild(title: VideoEditorTranslationConstants.clipEditor.tr),
       body: Container(
         decoration: AppTheme.appBoxDecoration,
@@ -142,7 +142,7 @@ class VideoCropPage extends StatelessWidget {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColor.main75,
+            color: AppColor.surfaceElevated,
           ),
           child: Icon(icon, color: Colors.white, size: 22),
         ),
@@ -160,7 +160,7 @@ class VideoCropPage extends StatelessWidget {
         selected: selected,
         label: Text(label),
         selectedColor: AppColor.bondiBlue,
-        backgroundColor: AppColor.main75,
+        backgroundColor: AppColor.surfaceElevated,
         labelStyle: TextStyle(
           color: selected ? Colors.white : Colors.white70,
         ),

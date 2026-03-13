@@ -232,7 +232,7 @@
 //         return (await showDialog(
 //           context: context,
 //           builder: (context) => AlertDialog(
-//             backgroundColor: AppColor.getMain(),
+//             backgroundColor: AppColor.scaffold,
 //             title: Text(AppConstants.appTitle.tr),
 //             content:  Text(AppTranslationConstants.wantToCloseEditor.tr),
 //             actions: <Widget>[
@@ -253,7 +253,7 @@
 //         )) ?? false;
 //       },
 //       child: Scaffold(
-//         backgroundColor: AppColor.main50,
+//         backgroundColor: AppColor.scaffold,
 //         appBar: AppBarChild(
 //             title: (AppTranslationConstants.videoEditor.tr),
 //             actionWidgets: getAppBarActions()),
