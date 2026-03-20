@@ -3,7 +3,7 @@ import 'package:fraction/fraction.dart';
 import 'package:sint/sint.dart';
 import 'package:neom_commons/ui/theme/app_color.dart';
 import 'package:neom_commons/ui/theme/app_theme.dart';
-import 'package:neom_commons/ui/widgets/appbar_child.dart';
+
 import 'package:neom_commons/utils/constants/translations/app_translation_constants.dart';
 import 'package:video_editor/video_editor.dart';
 
@@ -18,7 +18,7 @@ class VideoCropPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColor.scaffold,
-      appBar: AppBarChild(title: VideoEditorTranslationConstants.clipEditor.tr),
+      appBar: SintAppBar(title: VideoEditorTranslationConstants.clipEditor.tr),
       body: Container(
         decoration: AppTheme.appBoxDecoration,
         child: Column(

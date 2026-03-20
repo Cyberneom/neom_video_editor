@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:sint/sint.dart';
 import 'package:neom_commons/ui/theme/app_color.dart';
 import 'package:neom_commons/ui/theme/app_theme.dart';
-import 'package:neom_commons/ui/widgets/appbar_child.dart';
+
 import 'package:neom_commons/utils/app_utilities.dart';
 import 'package:neom_commons/utils/constants/translations/app_translation_constants.dart';
 import 'package:neom_commons/utils/constants/translations/common_translation_constants.dart';
 import 'package:neom_commons/utils/datetime_utilities.dart';
 import 'package:neom_core/app_config.dart';
+import 'package:neom_core/utils/neom_error_logger.dart';
 import 'package:neom_core/app_properties.dart';
 import 'package:neom_core/domain/use_cases/media_upload_service.dart';
 import 'package:neom_core/domain/use_cases/user_service.dart';
@@ -175,8 +176,8 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
         AppConfig.logger.e("⛔ Archivo exportado es inválido o vacío.");
         AppUtilities.showSnackBar(message: "Hubo un error en la exportación.");
       }
-    } catch (e) {
-      AppConfig.logger.e(e.toString());
+    } catch (e, st) {
+      NeomErrorLogger.recordError(e, st, module: 'neom_video_editor', operation: 'processVideo');
     }
   }
 
@@ -214,9 +215,9 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
       },
       child: Scaffold(
         backgroundColor: AppColor.scaffold,
-        appBar: AppBarChild(
+        appBar: SintAppBar(
             title: (VideoEditorTranslationConstants.videoEditor.tr),
-            actionWidgets: getAppBarActions()),
+            actions: getAppBarActions()),
         body: _controller.initialized
             ? Container(
             height: AppTheme.fullHeight(context),
