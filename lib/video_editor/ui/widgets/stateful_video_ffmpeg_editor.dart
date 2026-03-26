@@ -86,7 +86,7 @@
 //           setState(() {});
 //         }).catchError((error) {
 //           // handle minumum duration bigger than video duration error
-//       Navigator.pop(context);
+//       Sint.back();
 //     }, test: (e) => e is VideoMinDurationError);
 //   }
 //
@@ -240,13 +240,13 @@
 //                 child: Text(AppTranslationConstants.no.tr,
 //                   style: const TextStyle(color: AppColor.white),
 //                 ),
-//                 onPressed: () => Navigator.of(context).pop(false),
+//                 onPressed: () => Sint.back(result: false),
 //               ),
 //               TextButton(
 //                 child: Text(AppTranslationConstants.yes.tr,
 //                   style: const TextStyle(color: AppColor.white),
 //                 ),
-//                 onPressed: () => Navigator.of(context).pop(true),
+//                 onPressed: () => Sint.back(result: true),
 //               )
 //             ],
 //           ),
@@ -352,7 +352,7 @@
 //
 //   Widget getLeadingAction() {
 //     return IconButton(
-//       onPressed: () => Navigator.of(context).pop(),
+//       onPressed: () => Sint.back(),
 //       icon: const Icon(Icons.close),
 //       tooltip: AppTranslationConstants.leaveVideoEditor,
 //     );

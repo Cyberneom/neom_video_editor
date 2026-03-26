@@ -107,7 +107,7 @@ class VideoCropPage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TextButton(
-                      onPressed: () => Navigator.pop(context),
+                      onPressed: () => Sint.back(),
                       child: Text(
                         AppTranslationConstants.cancel.tr,
                         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -119,7 +119,7 @@ class VideoCropPage extends StatelessWidget {
                       ),
                       onPressed: () {
                         controller.applyCacheCrop();
-                        Navigator.pop(context);
+                        Sint.back();
                       },
                       child: Text(
                         AppTranslationConstants.done.tr,
