@@ -115,7 +115,7 @@ class VideoCropPage extends StatelessWidget {
                     ),
                     TextButton(
                       style: TextButton.styleFrom(
-                        backgroundColor: AppColor.bondiBlue,
+                        backgroundColor: AppColor.getReleaseShelfColor(),
                       ),
                       onPressed: () {
                         controller.applyCacheCrop();

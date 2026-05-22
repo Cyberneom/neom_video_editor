@@ -1,4 +1,3 @@
-// import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:easy_video_editor/easy_video_editor.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -154,18 +153,6 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
         );
         increaseProgressPercentage();
       }
-
-      // if(hasTrimChanges) {
-      //   increaseProgressPercentage();
-      //   processedVideo = await trimVideo(originalVideo.path, editedClipName);
-      //   increaseProgressPercentage();
-      // }
-      //
-      // if(hasCropChanges && (processedVideo?.path.isNotEmpty ?? false)) {
-      //   increaseProgressPercentage();
-      //   processedVideo = await cropVideoViaBuilder(processedVideo?.path ?? '', editedClipName);
-      //   increaseProgressPercentage();
-      // }
 
       if(processedVideo != null) editedVideo = processedVideo;
       _isExporting.value = false;
@@ -519,48 +506,5 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
       return null;
     }
   }
-
-  // Future<File?> cropVideo(String videoPath, String videoName) async {
-  //   final croppedController = VideoEditorController.file(
-  //     File(videoPath),
-  //     maxDuration: Duration(seconds: maxDurationInSeconds),
-  //   );
-  //
-  //   await croppedController.initialize();
-  //
-  //   // Copia configuración de crop original al nuevo controller
-  //   croppedController.updateCrop(_controller.minCrop, _controller.maxCrop);
-  //   croppedController.preferredCropAspectRatio = _controller.preferredCropAspectRatio;
-  //
-  //   VideoFFmpegVideoEditorConfig config = VideoFFmpegVideoEditorConfig(
-  //     croppedController,
-  //     name: '${videoName}_cropped',
-  //     format: VideoExportFormat.mp4,
-  //   );
-  //
-  //   final FFmpegVideoEditorExecute executeConfig = await config.getExecuteConfig();
-  //   // Run FFmpeg command to actually produce the file
-  //   final session = await FFmpegKit.execute(executeConfig.command);
-  //   final returnCode = await session.getReturnCode();
-  //   croppedController.dispose();
-  //
-  //   if(ReturnCode.isSuccess(returnCode) && executeConfig.outputPath.isNotEmpty) {
-  //     final outputFile = File(executeConfig.outputPath);
-  //     if (await outputFile.exists()) {
-  //       AppConfig.logger.i('Crop succeeded: ${outputFile.path}');
-  //       hasCropChanges = false;
-  //       hadCropChanges = true;
-  //       return outputFile;
-  //     } else {
-  //       AppConfig.logger.e('Cropped file not found after ffmpeg execution: ${outputFile.path}');
-  //     }
-  //   } else {
-  //     AppConfig.logger.e("⛔ Error al exportar video (Trim)");
-  //     AppUtilities.showSnackBar(message: "Error al exportar el video :(");
-  //     _isExporting.value = false;
-  //     return null;
-  //   }
-  //
-  // }
 
 }
