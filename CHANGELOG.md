@@ -1,5 +1,8 @@
 # Changelog
 
+## [2.0.0-unreleased] - 2026-07-21
+- Refactor and compatibility updates for video_editor_page.dart.
+
 All notable changes to neom_video_editor will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),

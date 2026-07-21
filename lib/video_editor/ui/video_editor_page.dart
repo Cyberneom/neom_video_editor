@@ -1,6 +1,8 @@
 import 'package:easy_video_editor/easy_video_editor.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:video_compress/video_compress.dart';
 import 'package:sint/sint.dart';
 import 'package:neom_commons/ui/theme/app_color.dart';
 import 'package:neom_commons/ui/theme/app_theme.dart';
@@ -155,6 +157,24 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
       }
 
       if(processedVideo != null) editedVideo = processedVideo;
+
+      if (!kIsWeb && editedVideo.path.isNotEmpty && editedVideo.existsSync()) {
+        try {
+          AppConfig.logger.i('Compressing video on mobile: ${editedVideo.path}');
+          final mediaInfo = await VideoCompress.compressVideo(
+            editedVideo.path,
+            quality: VideoQuality.MediumQuality,
+            deleteOrigin: false,
+          );
+          if (mediaInfo != null && mediaInfo.file != null) {
+            editedVideo = mediaInfo.file!;
+            AppConfig.logger.i('Video compressed successfully to ${editedVideo.path}, size: ${mediaInfo.filesize} bytes');
+          }
+        } catch (e, st) {
+          AppConfig.logger.e('Error during video compression: $e');
+        }
+      }
+
       _isExporting.value = false;
 
       if (editedVideo.path.isNotEmpty) {
