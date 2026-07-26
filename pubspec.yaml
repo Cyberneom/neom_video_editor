@@ -14,10 +14,10 @@ dependencies:
 
   neom_core:
     git:
-      url: git@github.com:Cyberneom/neom_core.git
+      url: git@github.com:Open-Neom/neom_core.git
   neom_commons:
     git:
-      url: git@github.com:Cyberneom/neom_commons.git
+      url: git@github.com:Open-Neom/neom_commons.git
 
   fraction: ^5.0.5
   video_editor: ^3.0.0
