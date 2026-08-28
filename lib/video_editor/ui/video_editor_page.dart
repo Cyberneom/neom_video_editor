@@ -1,5 +1,9 @@
 import 'package:easy_video_editor/easy_video_editor.dart';
 import 'dart:io';
+// MediaUploadService takes neom_core's conditional File (dart:io on
+// mobile/desktop, stub on web). This page interops with dart:io types from
+// video_editor/path_provider/video_compress, so convert only at that boundary.
+import 'package:neom_core/utils/platform/core_io.dart' as core_io;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_compress/video_compress.dart';
@@ -178,7 +182,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
       _isExporting.value = false;
 
       if (editedVideo.path.isNotEmpty) {
-        mediaUploadServiceImpl.setProcessedVideo(editedVideo);
+        mediaUploadServiceImpl.setProcessedVideo(core_io.File(editedVideo.path));
       } else {
         AppConfig.logger.e("⛔ Archivo exportado es inválido o vacío.");
         AppUtilities.showSnackBar(message: "Hubo un error en la exportación.");
@@ -247,8 +251,8 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
                               decoration: BoxDecoration(
                                   gradient: LinearGradient(
                                       colors: [
-                                        const Color(0x36FFFFFF).withOpacity(0.1),
-                                        const Color(0x0FFFFFFF).withOpacity(0.1)
+                                        const Color(0x36FFFFFF).withValues(alpha: 0.1),
+                                        const Color(0x0FFFFFFF).withValues(alpha: 0.1)
                                       ],
                                       begin: FractionalOffset.topLeft,
                                       end: FractionalOffset.bottomRight
@@ -258,7 +262,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
                               child: IconButton(
                                 icon: Icon(_controller.isPlaying ? Icons.pause : Icons.play_arrow,),
                                 iconSize: 30,
-                                color: Colors.white70.withOpacity(0.5),
+                                color: Colors.white70.withValues(alpha: 0.5),
                                 onPressed: () => _controller.video.play(),
                               ),
                             ),
@@ -349,9 +353,9 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
                 processVideo();
               } else {
                 if(editedVideo.existsSync()) {
-                  mediaUploadServiceImpl.setProcessedVideo(editedVideo);
+                  mediaUploadServiceImpl.setProcessedVideo(core_io.File(editedVideo.path));
                 } else {
-                  mediaUploadServiceImpl.setProcessedVideo(originalVideo);
+                  mediaUploadServiceImpl.setProcessedVideo(core_io.File(originalVideo.path));
                 }
               }
             },
