@@ -5,7 +5,7 @@ homepage: https://github.com/Cyberneom/neom_video_editor
 publish_to: 'none'
 
 environment:
-  sdk: ">=3.8.0 <4.0.0"
+  sdk: ">=3.12.0 <4.0.0"
   flutter: ">=3.19.0"
 
 dependencies:
@@ -19,12 +19,26 @@ dependencies:
     git:
       url: git@github.com:Open-Neom/neom_commons.git
 
+  crypto: ^3.0.6
   fraction: ^5.0.5
   video_editor: ^3.0.0
   easy_video_editor: ^0.1.2
   pro_video_editor: ^1.14.3
 
   video_compress: ^3.1.4
+  web: ^1.1.1
+  video_player: ^2.14.0
+  file_picker: ^11.0.3
+  path_provider: ^2.1.5
+  neom_craft_workspace:
+    path: ../neom_craft_workspace
+  neom_media_recovery:
+    path: ../neom_media_recovery
+  neom_craft_libs: ^0.1.0
+  neom_filmcraft:
+    path: ../../../../codebase_artcraft/packages/neom_filmcraft
+  neom_effectcraft:
+    path: ../../../../codebase_artcraft/packages/neom_effectcraft
 
 dev_dependencies:
   flutter_test:
@@ -32,3 +46,7 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter:
+  assets:
+    - assets/web/neom_video_export.bundle.js
+    - assets/web/MEDIABUNNY_LICENSE
+    - assets/web/THIRD_PARTY_NOTICES.txt

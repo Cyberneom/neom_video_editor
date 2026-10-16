@@ -1,0 +1,12 @@
+{
+  "name": "neom-video-web-export-build",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild neom_video_export.js --bundle --format=iife --platform=browser --target=es2022 --minify --legal-comments=inline --outfile=../../assets/web/neom_video_export.bundle.js",
+    "test": "node --test neom_video_export.test.js"
+  },
+  "dependencies": {"mediabunny": "1.61.4"},
+  "devDependencies": {"esbuild": "0.25.12"}
+}

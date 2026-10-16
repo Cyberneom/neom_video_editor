@@ -27,6 +27,8 @@ import 'package:video_editor/video_editor.dart';
 
 import '../utils/constants/video_editor_translation_constants.dart';
 import 'video_crop_page.dart';
+import '../../video_craft/domain/video_craft_source.dart';
+import '../../video_craft/ui/video_editor_sections_page.dart';
 
 class VideoEditorPage extends StatefulWidget {
 
@@ -330,11 +332,28 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
     );
   }
 
+  Future<void> _openCraftSections() async {
+    await _controller.video.pause();
+    if (!mounted) return;
+    await Navigator.of(context).push<void>(MaterialPageRoute(
+      builder: (_) => VideoEditorSectionsPage(
+        source: VideoCraftSource.uri(editedVideo.uri,
+          name: editedVideo.uri.pathSegments.last),
+      ),
+    ));
+  }
+
   List<Widget> getAppBarActions() {
     return [
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          IconButton(
+            tooltip: 'Tiempo y animación',
+            onPressed: _controller.initialized && !_isExporting.value
+                ? _openCraftSections : null,
+            icon: const Icon(Icons.auto_awesome_motion_outlined),
+          ),
         IconButton(
           onPressed: () {
             hasCropChanges = true;

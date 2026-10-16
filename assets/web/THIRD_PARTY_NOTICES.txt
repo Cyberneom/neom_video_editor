@@ -1,0 +1,8 @@
+Neom video web export includes Mediabunny 1.61.4.
+Copyright (c) 2026-present, Vanilagy and contributors.
+License: Mozilla Public License 2.0 (see MEDIABUNNY_LICENSE in this directory).
+The corresponding unmodified source is available at:
+https://registry.npmjs.org/mediabunny/-/mediabunny-1.61.4.tgz
+Project: https://github.com/Vanilagy/mediabunny
+npm integrity: sha512-gZPBi40ldiZGeU2DJxT/Q3hlNiaxfpwNYTfmi0Maq3SoBJT64+W+ySc0Z7t+2JUGxNbkXnLFrDkSS2OQuweOhA==
+The Open Neom adapter and reproducible build recipe live in tool/web_export/.

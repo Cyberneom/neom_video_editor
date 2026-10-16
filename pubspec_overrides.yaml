@@ -1,7 +1,11 @@
 dependency_overrides:
+  neom_craft_libs:
+    path: ../../../../codebase_artcraft/packages/neom_craft_libs
   sint:
     path: ../../framework/sint
   neom_core:
     path: ../../main/neom_core
   neom_commons:
     path: ../../main/neom_commons
+  pro_video_editor:
+    path: ../../../../codebase_artcraft/vendor/pro_video_editor
