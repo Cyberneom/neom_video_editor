@@ -23,7 +23,10 @@ dependencies:
   fraction: ^5.0.5
   video_editor: ^3.0.0
   easy_video_editor: ^0.1.2
-  pro_video_editor: ^1.14.3
+  pro_video_editor:
+    git:
+      url: git@github.com:Open-Neom/neom_craft_workspace.git
+      path: vendor/pro_video_editor
 
   video_compress: ^3.1.4
   web: ^1.1.1
@@ -31,14 +34,23 @@ dependencies:
   file_picker: ^11.0.3
   path_provider: ^2.1.5
   neom_craft_workspace:
-    path: ../neom_craft_workspace
+    git:
+      url: git@github.com:Open-Neom/neom_craft_workspace.git
   neom_media_recovery:
-    path: ../neom_media_recovery
-  neom_craft_libs: ^0.1.0
+    git:
+      url: git@github.com:Open-Neom/neom_media_recovery.git
+  neom_craft_libs:
+    git:
+      url: git@github.com:Open-Neom/neom_craft_workspace.git
+      path: packages/neom_craft_libs
   neom_filmcraft:
-    path: ../../../../codebase_artcraft/packages/neom_filmcraft
+    git:
+      url: git@github.com:Open-Neom/neom_craft_workspace.git
+      path: packages/neom_filmcraft
   neom_effectcraft:
-    path: ../../../../codebase_artcraft/packages/neom_effectcraft
+    git:
+      url: git@github.com:Open-Neom/neom_craft_workspace.git
+      path: packages/neom_effectcraft
 
 dev_dependencies:
   flutter_test:

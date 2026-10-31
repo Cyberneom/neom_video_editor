@@ -1,11 +1,19 @@
 dependency_overrides:
   neom_craft_libs:
-    path: ../../../../codebase_artcraft/packages/neom_craft_libs
+    path: ../neom_craft_workspace/packages/neom_craft_libs
+  neom_craft_workspace:
+    path: ../neom_craft_workspace
+  neom_media_recovery:
+    path: ../neom_media_recovery
+  neom_filmcraft:
+    path: ../neom_craft_workspace/packages/neom_filmcraft
+  neom_effectcraft:
+    path: ../neom_craft_workspace/packages/neom_effectcraft
+  pro_video_editor:
+    path: ../neom_craft_workspace/vendor/pro_video_editor
   sint:
     path: ../../framework/sint
   neom_core:
     path: ../../main/neom_core
   neom_commons:
     path: ../../main/neom_commons
-  pro_video_editor:
-    path: ../../../../codebase_artcraft/vendor/pro_video_editor
