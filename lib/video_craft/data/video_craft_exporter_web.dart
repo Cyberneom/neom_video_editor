@@ -10,7 +10,9 @@ import '../domain/video_craft_recipe.dart';
 import '../domain/video_craft_source.dart';
 import '../rendering/video_craft_title_renderer.dart';
 import 'video_craft_export_control.dart';
+import 'video_craft_origin_web.dart';
 import 'video_craft_trim_exporter.dart';
+import 'video_craft_url_security.dart';
 
 @JS('isSecureContext')
 external bool get _isSecureContext;
@@ -51,10 +53,13 @@ Future<void> _loadScript() async {
   if (_backend != null) return;
   // The engine resolves the asset URL, including an app subdirectory or a
   // configured assetBase. No inline script, blob: CSP exception, or CDN is used.
-  final script = web.HTMLScriptElement()
-    ..src = ui_web.assetManager.getAssetUrl(
+  final script = web.HTMLScriptElement();
+  assignVerifiedExportScriptSrc(
+    script,
+    ui_web.assetManager.getAssetUrl(
       'packages/neom_video_editor/assets/web/neom_video_export.bundle.js',
-    );
+    ),
+  );
   final ready = Completer<void>();
   script.onload = ((web.Event _) {
     if (!ready.isCompleted) ready.complete();
@@ -115,6 +120,22 @@ class WebVideoCraftTrimExporter implements VideoCraftControlledExporter {
         'La exportación MP4 requiere WebCodecs en HTTPS o localhost.',
       );
     }
+    if (source.bytes == null) {
+      final srcUri = source.uri;
+      if (srcUri == null) {
+        throw const FormatException('La exportación requiere bytes o una URI válida.');
+      }
+      final scheme = srcUri.scheme.toLowerCase();
+      final allowed = scheme == 'blob'
+          ? isSameOriginBlobUri(srcUri)
+          : ((scheme == 'http' || scheme == 'https') &&
+                isSafePublicVideoExportUri(srcUri));
+      if (!allowed) {
+        throw UnsupportedError(
+          'La URI de exportación usa un esquema, host privado o blob de otro origen bloqueado.',
+        );
+      }
+    }
     await _loadBackend();
     token.throwIfCancelled();
     final id = 'neom-video-${_nextExportId++}';
@@ -129,12 +150,30 @@ class WebVideoCraftTrimExporter implements VideoCraftControlledExporter {
       ).toDart;
       token.throwIfCancelled();
       final metadata = jsonDecode(metadataText.toDart) as Map<String, dynamic>;
+      final rawWidth = metadata['width'];
+      final rawHeight = metadata['height'];
+      if (rawWidth is! num ||
+          !rawWidth.isFinite ||
+          rawHeight is! num ||
+          !rawHeight.isFinite) {
+        throw const FormatException('Dimensiones inválidas del video exportado.');
+      }
+      final safeWidth = rawWidth.toInt();
+      final safeHeight = rawHeight.toInt();
+      if (safeWidth <= 0 ||
+          safeWidth > 8192 ||
+          safeHeight <= 0 ||
+          safeHeight > 8192) {
+        throw const FormatException(
+          'Las dimensiones del video exceden los límites permitidos.',
+        );
+      }
       final png = recipe.title.trim().isEmpty
           ? Uint8List(0)
           : await renderVideoCraftTitle(
               recipe.title,
-              width: metadata['width'] as int,
-              height: metadata['height'] as int,
+              width: safeWidth,
+              height: safeHeight,
             );
       token.throwIfCancelled();
       final progress = ((JSNumber value) {

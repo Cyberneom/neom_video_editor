@@ -13,7 +13,15 @@ dependency_overrides:
     path: ../neom_craft_workspace/vendor/pro_video_editor
   sint:
     path: ../../framework/sint
+  sint_sentinel:
+    path: ../../framework/sint_sentinel
   neom_core:
     path: ../../main/neom_core
   neom_commons:
     path: ../../main/neom_commons
+  neom_codecs:
+    path: ../../main/neom_codecs
+  neom_google_places:
+    path: ../../content/neom_google_places
+  neom_maps_services:
+    path: ../../content/neom_maps_services

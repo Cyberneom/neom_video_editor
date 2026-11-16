@@ -45,13 +45,11 @@ class PlatformVideoEditorFileAccess extends VideoEditorFileAccess {
         !kIsWeb &&
         defaultTargetPlatform == TargetPlatform.iOS &&
         extensions.any(const {'neomvideoproject', 'neomvideo'}.contains);
-    final result = await FilePicker.pickFiles(
+    final file = await FilePicker.pickFile(
       type: unfilteredProject ? FileType.any : FileType.custom,
       allowedExtensions: unfilteredProject ? null : extensions,
-      withData: true,
     );
-    if (result == null || result.files.isEmpty) return null;
-    final file = result.files.single;
+    if (file == null) return null;
     if (unfilteredProject &&
         !extensions.any(
           (extension) =>
@@ -66,12 +64,13 @@ class PlatformVideoEditorFileAccess extends VideoEditorFileAccess {
         : extensions.contains('json')
         ? 1024 * 1024
         : null;
-    if (limit != null && file.size > limit) {
+    final knownSize = file.lengthSync() ?? await file.length();
+    if (limit != null && knownSize != null && knownSize > limit) {
       throw const FormatException(
         'The selected document exceeds its size limit.',
       );
     }
-    final bytes = file.bytes ?? await file.xFile.readAsBytes();
+    final bytes = await file.readAsBytes();
     if (limit != null && bytes.length > limit) {
       throw const FormatException(
         'The selected document exceeds its size limit.',
@@ -89,15 +88,13 @@ class PlatformVideoEditorFileAccess extends VideoEditorFileAccess {
     required String name,
     required String extension,
   }) async {
-    final path = await FilePicker.saveFile(
+    final savedUri = await FilePicker.saveFile(
       fileName: name,
-      type: FileType.custom,
-      allowedExtensions: [extension],
       bytes: bytes,
     );
     // The browser starts a download and intentionally returns no local path.
     if (kIsWeb) return VideoEditorSaveResult.downloadStarted;
-    return path == null
+    return savedUri == null
         ? VideoEditorSaveResult.cancelled
         : VideoEditorSaveResult.saved;
   }

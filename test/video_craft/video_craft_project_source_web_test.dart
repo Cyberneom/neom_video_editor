@@ -5,6 +5,7 @@ import 'dart:js_interop';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:neom_video_editor/video_craft/data/video_craft_origin_web.dart';
 import 'package:neom_video_editor/video_craft/data/video_craft_project_source_web.dart';
 import 'package:web/web.dart' as web;
 
@@ -14,6 +15,7 @@ void main() {
     final blob = web.Blob(<JSAny>[bytes.toJS].toJS);
     final url = web.URL.createObjectURL(blob);
     try {
+      expect(isSameOriginBlobUri(Uri.parse(url)), isTrue);
       expect(await readProjectUri(Uri.parse(url), 32), bytes);
       await expectLater(
         readProjectUri(Uri.parse(url), 31),
@@ -21,6 +23,23 @@ void main() {
       );
       await expectLater(
         readProjectUri(Uri.parse('file:///clip.mp4'), 32),
+        throwsUnsupportedError,
+      );
+      // Reject opaque/null-origin and cross-origin blob URLs per validate-origins.
+      await expectLater(
+        readProjectUri(
+          Uri.parse('blob:null/00000000-0000-0000-0000-000000000000'),
+          32,
+        ),
+        throwsUnsupportedError,
+      );
+      await expectLater(
+        readProjectUri(
+          Uri.parse(
+            'blob:https://evil.example/00000000-0000-0000-0000-000000000000',
+          ),
+          32,
+        ),
         throwsUnsupportedError,
       );
     } finally {

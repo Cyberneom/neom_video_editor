@@ -3,11 +3,15 @@ import 'package:flutter/foundation.dart';
 import '../domain/video_craft_recipe.dart';
 import '../domain/video_craft_source.dart';
 import 'video_craft_export_control.dart';
+import 'video_craft_url_security.dart';
 
 /// Compatibility type for callers explicitly choosing the native backend.
 /// Web clients should use createVideoCraftExporter() for the WebCodecs backend.
 class ProVideoCraftTrimExporter implements VideoCraftControlledExporter {
   const ProVideoCraftTrimExporter();
+
+  static bool isSafePublicVideoUri(Uri uri) => isSafePublicVideoExportUri(uri);
+
   @override
   bool get isSupported => false;
   @override

@@ -1,5 +1,7 @@
-import 'package:easy_video_editor/easy_video_editor.dart';
+import 'dart:async';
 import 'dart:io';
+
+import 'package:easy_video_editor/easy_video_editor.dart';
 // MediaUploadService takes neom_core's conditional File (dart:io on
 // mobile/desktop, stub on web). This page interops with dart:io types from
 // video_editor/path_provider/video_compress, so convert only at that boundary.
@@ -47,7 +49,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
   final userServiceImpl = Sint.find<UserService>();
   final mediaUploadServiceImpl = Sint.find<MediaUploadService>();
 
-  late final VideoEditorController _controller;
+  VideoEditorController? _controller;
 
   File originalVideo = File('');
   File editedVideo = File('');
@@ -83,47 +85,59 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
   }
 
   void initializeVideoEditorController(File file) {
-    _controller = VideoEditorController.file(
-        file,
-        minDuration: const Duration(seconds: 1),
-        maxDuration: Duration(seconds: maxDurationInSeconds),
-        trimStyle: TrimSliderStyle(
-          onTrimmedColor: AppColor.bondiBlue,
-          lineColor: AppColor.bondiBlue,
-          iconColor: AppColor.white
-        ),
+    final controller = VideoEditorController.file(
+      file,
+      minDuration: const Duration(seconds: 1),
+      maxDuration: Duration(seconds: maxDurationInSeconds),
+      trimStyle: TrimSliderStyle(
+        onTrimmedColor: AppColor.bondiBlue,
+        lineColor: AppColor.bondiBlue,
+        iconColor: AppColor.white,
+      ),
     );
-    _controller.initialize()
-        .then((_) {
-          _controller.video.play();
-          Size videoSize = _controller.video.value.size;
-          aspectRatio = videoSize.width / videoSize.height;
-          startTrim = _controller.startTrim.inMilliseconds;
-          endTrim = _controller.endTrim.inMilliseconds;
-          setState(() {});
-        }).catchError((error) {
-          // handle minumum duration bigger than video duration error
-      Sint.back();
+    _controller = controller;
+    controller.initialize().then((_) {
+      if (!mounted || _controller != controller) return;
+      controller.video.play();
+      final Size videoSize = controller.video.value.size;
+      if (videoSize.height > 0) {
+        aspectRatio = videoSize.width / videoSize.height;
+      }
+      startTrim = controller.startTrim.inMilliseconds;
+      endTrim = controller.endTrim.inMilliseconds;
+      setState(() {});
+    }).catchError((error) {
+      // handle minimum duration bigger than video duration error
+      if (mounted) {
+        Sint.back();
+      }
     }, test: (e) => e is VideoMinDurationError);
   }
 
   @override
-  void dispose() async {
+  void dispose() {
     _exportingProgress.dispose();
     _isExporting.dispose();
-    _controller.dispose();
+    final controller = _controller;
+    _controller = null;
+    if (controller != null) {
+      unawaited(controller.dispose());
+    }
     // ExportService.dispose();
     super.dispose();
   }
 
   Future<void> processVideo() async {
-    AppConfig.logger.i('Processing video from path ${_controller.file.path}');
+    final controller = _controller;
+    if (controller == null) return;
 
-    File? processedVideo = _controller.file;
+    AppConfig.logger.i('Processing video from path ${controller.file.path}');
+
+    File? processedVideo = controller.file;
     String editedClipName = '${userServiceImpl.profile.name.split(' ').first.toLowerCase()}_${AppProperties.getClipName}_${DateTime.now().millisecondsSinceEpoch}';
 
     try {
-      await _controller.video.pause();
+      await controller.video.pause();
 
       if(hasCropChanges && hadTrimChanges) {
         hasTrimChanges = true;
@@ -201,125 +215,156 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        return (await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppColor.scaffold,
-            title: Text(AppProperties.getAppName()),
-            content:  Text(CommonTranslationConstants.wantToCloseEditor.tr),
-            actions: <Widget>[
-              TextButton(
-                child: Text(AppTranslationConstants.no.tr,
-                  style: const TextStyle(color: AppColor.white),
-                ),
-                onPressed: () => Sint.back(result: false),
+    final controller = _controller;
+    final isReady = controller != null && controller.initialized;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        if (didPop) return;
+        final shouldClose = (await showDialog<bool>(
+              context: context,
+              builder: (_) => AlertDialog(
+                backgroundColor: AppColor.scaffold,
+                title: Text(AppProperties.getAppName()),
+                content: Text(CommonTranslationConstants.wantToCloseEditor.tr),
+                actions: <Widget>[
+                  TextButton(
+                    child: Text(
+                      AppTranslationConstants.no.tr,
+                      style: const TextStyle(color: AppColor.white),
+                    ),
+                    onPressed: () => Sint.pop(false),
+                  ),
+                  TextButton(
+                    child: Text(
+                      AppTranslationConstants.yes.tr,
+                      style: const TextStyle(color: AppColor.white),
+                    ),
+                    onPressed: () => Sint.pop(true),
+                  ),
+                ],
               ),
-              TextButton(
-                child: Text(AppTranslationConstants.yes.tr,
-                  style: const TextStyle(color: AppColor.white),
-                ),
-                onPressed: () => Sint.back(result: true),
-              )
-            ],
-          ),
-        )) ?? false;
+            )) ??
+            false;
+        if (shouldClose && context.mounted) {
+          Sint.back(result: true);
+        }
       },
       child: Scaffold(
         backgroundColor: AppColor.scaffold,
         appBar: SintAppBar(
-            title: (VideoEditorTranslationConstants.videoEditor.tr),
-            actions: getAppBarActions()),
-        body: _controller.initialized
-            ? Container(
-            height: AppTheme.fullHeight(context),
-            decoration: AppTheme.appBoxDecoration,
-            child: Column(
-              children: [
-                SizedBox(
-                  height: AppTheme.fullHeight(context)/2,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      CropGridViewer.preview(controller: _controller),
-                      AnimatedBuilder(
-                        animation: _controller.video,
-                        builder: (_, __) => AnimatedOpacity(
-                          opacity: _controller.isPlaying ? 0 : 1,
-                          duration: kThemeAnimationDuration,
-                          child: Center(
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                      colors: [
-                                        const Color(0x36FFFFFF).withValues(alpha: 0.1),
-                                        const Color(0x0FFFFFFF).withValues(alpha: 0.1)
-                                      ],
-                                      begin: FractionalOffset.topLeft,
-                                      end: FractionalOffset.bottomRight
+          title: (VideoEditorTranslationConstants.videoEditor.tr),
+          actions: getAppBarActions(),
+        ),
+        body: widget.file == null
+            ? Center(
+                child: Text(
+                  CommonTranslationConstants.notAvailable.tr,
+                  style: const TextStyle(color: AppColor.white),
+                ),
+              )
+            : isReady
+                ? Container(
+                    height: AppTheme.fullHeight(context),
+                    decoration: AppTheme.appBoxDecoration,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          height: AppTheme.fullHeight(context) / 2,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              CropGridViewer.preview(controller: controller),
+                              AnimatedBuilder(
+                                animation: controller.video,
+                                builder: (_, __) => AnimatedOpacity(
+                                  opacity: controller.isPlaying ? 0 : 1,
+                                  duration: kThemeAnimationDuration,
+                                  child: Center(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            const Color(0x36FFFFFF)
+                                                .withValues(alpha: 0.1),
+                                            const Color(0x0FFFFFFF)
+                                                .withValues(alpha: 0.1),
+                                          ],
+                                          begin: FractionalOffset.topLeft,
+                                          end: FractionalOffset.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(50),
+                                      ),
+                                      child: IconButton(
+                                        icon: Icon(
+                                          controller.isPlaying
+                                              ? Icons.pause
+                                              : Icons.play_arrow,
+                                        ),
+                                        iconSize: 30,
+                                        color: Colors.white70
+                                            .withValues(alpha: 0.5),
+                                        onPressed: () =>
+                                            controller.video.play(),
+                                      ),
+                                    ),
                                   ),
-                                  borderRadius: BorderRadius.circular(50)
+                                ),
                               ),
-                              child: IconButton(
-                                icon: Icon(_controller.isPlaying ? Icons.pause : Icons.play_arrow,),
-                                iconSize: 30,
-                                color: Colors.white70.withValues(alpha: 0.5),
-                                onPressed: () => _controller.video.play(),
-                              ),
-                            ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.only(top: 10),
-                  child: Column(
-                    children: _trimSlider(),
-                  ),
-                ),
-                ValueListenableBuilder(
-                  valueListenable: _isExporting,
-                  builder: (_, bool export, Widget? child) =>
-                      AnimatedSize(
-                        duration: kThemeAnimationDuration,
-                        child: export ? child : null,
-                      ),
-                  child: AlertDialog(
-                    title: ValueListenableBuilder(
-                      valueListenable: _exportingProgress,
-                      builder: (_, double value, __)  {
-                        return TweenAnimationBuilder<double>(
-                          tween: Tween<double>(begin: 0.0, end: value),
-                          duration: const Duration(seconds: 1),
-                          builder: (context, animatedValue, child) {
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                LinearProgressIndicator(
-                                  value: animatedValue,
-                                  backgroundColor: Colors.white30,
-                                  color: Colors.white,
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  '${CommonTranslationConstants.processingVideo.tr} ${(animatedValue * 100).ceil()}%',
-                                  style: const TextStyle(fontSize: 14, color: Colors.white),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
+                        Container(
+                          margin: const EdgeInsets.only(top: 10),
+                          child: Column(
+                            children: _trimSlider(controller),
+                          ),
+                        ),
+                        ValueListenableBuilder(
+                          valueListenable: _isExporting,
+                          builder: (_, bool export, Widget? child) =>
+                              AnimatedSize(
+                            duration: kThemeAnimationDuration,
+                            child: export ? child : null,
+                          ),
+                          child: AlertDialog(
+                            title: ValueListenableBuilder(
+                              valueListenable: _exportingProgress,
+                              builder: (_, double value, __) {
+                                return TweenAnimationBuilder<double>(
+                                  tween: Tween<double>(begin: 0.0, end: value),
+                                  duration: const Duration(seconds: 1),
+                                  builder: (context, animatedValue, child) {
+                                    return Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        LinearProgressIndicator(
+                                          value: animatedValue,
+                                          backgroundColor: Colors.white30,
+                                          color: Colors.white,
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          '${CommonTranslationConstants.processingVideo.tr} ${(animatedValue * 100).ceil()}%',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                            backgroundColor: AppColor.bondiBlue,
+                          ),
+                        ),
+                      ],
                     ),
-                    backgroundColor: AppColor.bondiBlue,
-                  ),
-                )
-              ],
-            ),
-        ) : const Center(child: CircularProgressIndicator()),
+                  )
+                : const Center(child: CircularProgressIndicator()),
       ),
     );
   }
@@ -333,77 +378,87 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
   }
 
   Future<void> _openCraftSections() async {
-    await _controller.video.pause();
+    final controller = _controller;
+    if (controller == null) return;
+    await controller.video.pause();
     if (!mounted) return;
-    await Navigator.of(context).push<void>(MaterialPageRoute(
-      builder: (_) => VideoEditorSectionsPage(
+    await Sint.to<void>(
+      () => VideoEditorSectionsPage(
         source: VideoCraftSource.uri(editedVideo.uri,
           name: editedVideo.uri.pathSegments.last),
       ),
-    ));
+    );
   }
 
   List<Widget> getAppBarActions() {
+    final controller = _controller;
+    final isReady = controller != null && controller.initialized;
+
     return [
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             tooltip: 'Tiempo y animación',
-            onPressed: _controller.initialized && !_isExporting.value
-                ? _openCraftSections : null,
+            onPressed: isReady && !_isExporting.value
+                ? _openCraftSections
+                : null,
             icon: const Icon(Icons.auto_awesome_motion_outlined),
           ),
-        IconButton(
-          onPressed: () {
-            hasCropChanges = true;
-            Navigator.push(context,
-              MaterialPageRoute<void>(
-                builder: (context) => VideoCropPage(controller: _controller),
-              ),
-            );
-          },
-          icon: const Icon(Icons.crop),
-          tooltip: CommonTranslationConstants.openCropPage.tr,
-        ),
           IconButton(
-            onPressed: () async {
-              if(hasTrimChanges || hasCropChanges) {
-                processVideo();
-              } else {
-                if(editedVideo.existsSync()) {
-                  mediaUploadServiceImpl.setProcessedVideo(core_io.File(editedVideo.path));
-                } else {
-                  mediaUploadServiceImpl.setProcessedVideo(core_io.File(originalVideo.path));
-                }
-              }
-            },
+            onPressed: isReady
+                ? () {
+                    hasCropChanges = true;
+                    Sint.to<void>(
+                      () => VideoCropPage(controller: controller),
+                    );
+                  }
+                : null,
+            icon: const Icon(Icons.crop),
+            tooltip: CommonTranslationConstants.openCropPage.tr,
+          ),
+          IconButton(
+            onPressed: isReady
+                ? () async {
+                    if (hasTrimChanges || hasCropChanges) {
+                      await processVideo();
+                    } else {
+                      if (editedVideo.existsSync()) {
+                        mediaUploadServiceImpl
+                            .setProcessedVideo(core_io.File(editedVideo.path));
+                      } else {
+                        mediaUploadServiceImpl.setProcessedVideo(
+                            core_io.File(originalVideo.path));
+                      }
+                    }
+                  }
+                : null,
             icon: const Icon(Icons.arrow_forward),
             tooltip: CommonTranslationConstants.processVideo.tr,
           ),
-      ],),
-
+        ],
+      ),
     ];
   }
 
-  List<Widget> _trimSlider() {
+  List<Widget> _trimSlider(VideoEditorController controller) {
     return [
       AnimatedBuilder(
         animation: Listenable.merge([
-          _controller,
-          _controller.video,
+          controller,
+          controller.video,
         ]),
         builder: (_, __) {
-          final int duration = _controller.videoDuration.inSeconds;
-          final double pos = _controller.trimPosition * duration;
+          final int duration = controller.videoDuration.inSeconds;
+          final double pos = controller.trimPosition * duration;
 
-          if(startTrim != _controller.startTrim.inMilliseconds) {
-            startTrim = _controller.startTrim.inMilliseconds;
+          if (startTrim != controller.startTrim.inMilliseconds) {
+            startTrim = controller.startTrim.inMilliseconds;
             hasTrimChanges = true;
           }
 
-          if(endTrim != _controller.endTrim.inMilliseconds) {
-            endTrim = _controller.endTrim.inMilliseconds;
+          if (endTrim != controller.endTrim.inMilliseconds) {
+            endTrim = controller.endTrim.inMilliseconds;
             hasTrimChanges = true;
           }
 
@@ -411,20 +466,26 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
             width: AppTheme.fullWidth(context),
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
-                children: [
-                  Text('${DateTimeUtilities.getDurationInMinutes(Duration(seconds: pos.toInt()).inMilliseconds)} / ${DateTimeUtilities.getDurationInMinutes(endTrim)}',),
-                  const Expanded(child: SizedBox()),
-                  AnimatedOpacity(
-                    opacity: _controller.isTrimming ? 1 : 0,
-                    duration: kThemeAnimationDuration,
-                    child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(DateTimeUtilities.getDurationInMinutes(endTrim-startTrim)),
-                        ]
-                    ),
+              children: [
+                Text(
+                  '${DateTimeUtilities.getDurationInMinutes(Duration(seconds: pos.toInt()).inMilliseconds)} / ${DateTimeUtilities.getDurationInMinutes(endTrim)}',
+                ),
+                const Expanded(child: SizedBox()),
+                AnimatedOpacity(
+                  opacity: controller.isTrimming ? 1 : 0,
+                  duration: kThemeAnimationDuration,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        DateTimeUtilities.getDurationInMinutes(
+                          endTrim - startTrim,
+                        ),
+                      ),
+                    ],
                   ),
-                ]
+                ),
+              ],
             ),
           );
         },
@@ -433,14 +494,14 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
         width: AppTheme.fullWidth(context),
         margin: const EdgeInsets.symmetric(vertical: 10),
         child: TrimSlider(
-          controller: _controller,
+          controller: controller,
           horizontalMargin: 10,
           child: TrimTimeline(
-            controller: _controller,
+            controller: controller,
             padding: const EdgeInsets.only(top: 10),
           ),
         ),
-      )
+      ),
     ];
   }
 

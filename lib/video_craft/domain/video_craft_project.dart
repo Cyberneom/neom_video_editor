@@ -10,6 +10,12 @@ import 'video_craft_source.dart';
 /// are embedded, not re-encoded; the recipe remains independently versioned.
 /// SHA-256 detects corruption, not the identity/authenticity of an author.
 class VideoCraftProject {
+  static final RegExp _forbiddenNameChars = RegExp(
+    r'[\x00-\x1F\x7F-\x9F\u0085\u061C\u200B-\u200F\u2028-\u202E\u2060\u2066-\u2069\uFEFF]',
+  );
+
+  static bool _isFiniteInt(Object? v) => v is int && (v as num).isFinite;
+
   VideoCraftProject({required this.source, required this.recipe, int? frame})
     : frame = frame ?? recipe.inFrame {
     final bytes = source.bytes;
@@ -19,7 +25,8 @@ class VideoCraftProject {
       );
     }
     if (source.name != recipe.sourceName ||
-        source.name.contains('\u0000') ||
+        _forbiddenNameChars.hasMatch(source.name) ||
+        !(this.frame as num).isFinite ||
         this.frame < 0 ||
         this.frame >= recipe.frameCount) {
       throw const FormatException(
@@ -119,9 +126,9 @@ class VideoCraftProject {
       if (header.keys.toSet().difference(keys).isNotEmpty ||
           !header.keys.toSet().containsAll(keys) ||
           header['format'] != 'neom-video-project' ||
-          header['version'] is! int ||
+          !_isFiniteInt(header['version']) ||
           header['version'] != 1 ||
-          header['frame'] is! int ||
+          !_isFiniteInt(header['frame']) ||
           header['recipe'] is! Map<String, dynamic>) {
         throw const FormatException('Invalid project metadata or version.');
       }
@@ -134,7 +141,7 @@ class VideoCraftProject {
         throw const FormatException('Project media container does not match.');
       }
       final recipeMetadata = header['recipe'] as Map<String, dynamic>;
-      if (recipeMetadata['version'] is! int) {
+      if (!_isFiniteInt(recipeMetadata['version'])) {
         throw const FormatException('Invalid recipe version.');
       }
       final recipe = VideoCraftRecipe.decode(jsonEncode(recipeMetadata));

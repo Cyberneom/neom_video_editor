@@ -12,6 +12,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  sint: ^2.0.2
+
   neom_core:
     git:
       url: git@github.com:Open-Neom/neom_core.git
@@ -19,20 +21,29 @@ dependencies:
     git:
       url: git@github.com:Open-Neom/neom_commons.git
 
-  crypto: ^3.0.6
+  crypto: ^3.0.8
+
+
   fraction: ^5.0.5
   video_editor: ^3.0.0
-  easy_video_editor: ^0.1.2
+  easy_video_editor: ^0.1.7
+
   pro_video_editor:
     git:
       url: git@github.com:Open-Neom/neom_craft_workspace.git
       path: vendor/pro_video_editor
 
   video_compress: ^3.1.4
-  web: ^1.1.1
-  video_player: ^2.14.0
-  file_picker: ^11.0.3
-  path_provider: ^2.1.5
+  web: ^1.1.2
+
+  video_player: ^2.14.1
+
+
+  file_picker: ^13.3.3
+
+  path_provider: ^2.1.6
+
+
   neom_craft_workspace:
     git:
       url: git@github.com:Open-Neom/neom_craft_workspace.git
@@ -55,7 +66,9 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
+
+
 
 flutter:
   assets:

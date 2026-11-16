@@ -1,5 +1,5 @@
-
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -7,14 +7,34 @@ import 'package:fraction/fraction.dart';
 import 'package:path/path.dart' as path;
 import 'package:video_player/video_player.dart';
 
-Future<void> _getImageDimension(File file,
-    {required Function(Size) onResult}) async {
-  var decodedImage = await decodeImageFromList(file.readAsBytesSync());
-  onResult(Size(decodedImage.width.toDouble(), decodedImage.height.toDouble()));
+Future<void> _getImageDimension(
+  File file, {
+  required void Function(Size) onResult,
+}) async {
+  if (!file.existsSync()) return;
+  final decodedImage = await decodeImageFromList(file.readAsBytesSync());
+  try {
+    onResult(
+      Size(decodedImage.width.toDouble(), decodedImage.height.toDouble()),
+    );
+  } finally {
+    decodedImage.dispose();
+  }
 }
 
-String _fileMBSize(File file) =>
-    ' ${(file.lengthSync() / (1024 * 1024)).toStringAsFixed(1)} MB';
+String _fileMBSize(File file) {
+  if (!file.existsSync()) return ' 0.0 MB';
+  return ' ${(file.lengthSync() / (1024 * 1024)).toStringAsFixed(1)} MB';
+}
+
+String _safeAspectRatioFraction(double ratio) {
+  if (!ratio.isFinite || ratio <= 0) return '0';
+  try {
+    return Fraction.fromDouble(ratio).reduce().toString();
+  } catch (_) {
+    return ratio.toStringAsFixed(2);
+  }
+}
 
 class VideoResultPopup extends StatefulWidget {
   const VideoResultPopup({super.key, required this.video});
@@ -39,11 +59,14 @@ class _VideoResultPopupState extends State<VideoResultPopup> {
     if (_isGif) {
       _getImageDimension(
         widget.video,
-        onResult: (d) => setState(() => _fileDimension = d),
+        onResult: (d) {
+          if (mounted) setState(() => _fileDimension = d);
+        },
       );
     } else {
       _controller = VideoPlayerController.file(widget.video);
       _controller?.initialize().then((_) {
+        if (!mounted) return;
         _fileDimension = _controller?.value.size ?? Size.zero;
         setState(() {});
         _controller?.play();
@@ -66,6 +89,8 @@ class _VideoResultPopupState extends State<VideoResultPopup> {
 
   @override
   Widget build(BuildContext context) {
+    final ratio = _fileDimension.aspectRatio;
+    final safeRatio = ratio.isFinite && ratio > 0 ? ratio : 1.0;
     return Padding(
       padding: const EdgeInsets.all(30),
       child: Center(
@@ -73,11 +98,12 @@ class _VideoResultPopupState extends State<VideoResultPopup> {
           alignment: Alignment.bottomLeft,
           children: [
             AspectRatio(
-              aspectRatio: _fileDimension.aspectRatio == 0
-                  ? 1
-                  : _fileDimension.aspectRatio,
-              child:
-              _isGif ? Image.file(widget.video) : VideoPlayer(_controller!),
+              aspectRatio: safeRatio,
+              child: _isGif
+                  ? Image.file(widget.video)
+                  : (_controller != null
+                        ? VideoPlayer(_controller!)
+                        : const SizedBox.shrink()),
             ),
             Positioned(
               bottom: 0,
@@ -86,10 +112,8 @@ class _VideoResultPopupState extends State<VideoResultPopup> {
                   'Video path': widget.video.path,
                   if (!_isGif)
                     'Video duration':
-                    '${((_controller?.value.duration.inMilliseconds ?? 0) / 1000).toStringAsFixed(2)}s',
-                  'Video ratio': Fraction.fromDouble(_fileDimension.aspectRatio)
-                      .reduce()
-                      .toString(),
+                        '${((_controller?.value.duration.inMilliseconds ?? 0) / 1000).toStringAsFixed(2)}s',
+                  'Video ratio': _safeAspectRatioFraction(ratio),
                   'Video dimension': _fileDimension.toString(),
                   'Video size': _fileMbSize,
                 },
@@ -112,7 +136,9 @@ class CoverResultPopup extends StatefulWidget {
 }
 
 class _CoverResultPopupState extends State<CoverResultPopup> {
-  late final Uint8List _imagebytes = widget.cover.readAsBytesSync();
+  late final Uint8List _imagebytes = widget.cover.existsSync()
+      ? widget.cover.readAsBytesSync()
+      : Uint8List(0);
   Size? _fileDimension;
   late String _fileMbSize;
 
@@ -121,7 +147,9 @@ class _CoverResultPopupState extends State<CoverResultPopup> {
     super.initState();
     _getImageDimension(
       widget.cover,
-      onResult: (d) => setState(() => _fileDimension = d),
+      onResult: (d) {
+        if (mounted) setState(() => _fileDimension = d);
+      },
     );
     _fileMbSize = _fileMBSize(widget.cover);
   }
@@ -133,16 +161,15 @@ class _CoverResultPopupState extends State<CoverResultPopup> {
       child: Center(
         child: Stack(
           children: [
-            Image.memory(_imagebytes),
+            if (_imagebytes.isNotEmpty) Image.memory(_imagebytes),
             Positioned(
               bottom: 0,
               child: FileDescription(
                 description: {
                   'Cover path': widget.cover.path,
-                  'Cover ratio':
-                  Fraction.fromDouble(_fileDimension?.aspectRatio ?? 0)
-                      .reduce()
-                      .toString(),
+                  'Cover ratio': _safeAspectRatioFraction(
+                    _fileDimension?.aspectRatio ?? 0,
+                  ),
                   'Cover dimension': _fileDimension.toString(),
                   'Cover size': _fileMbSize,
                 },
@@ -165,7 +192,7 @@ class FileDescription extends StatelessWidget {
     return DefaultTextStyle(
       style: const TextStyle(fontSize: 11),
       child: Container(
-        width: MediaQuery.of(context).size.width - 60,
+        width: math.max(0.0, MediaQuery.of(context).size.width - 60),
         padding: const EdgeInsets.all(10),
         color: Colors.black.withValues(alpha: 0.5),
         child: Column(
@@ -173,23 +200,23 @@ class FileDescription extends StatelessWidget {
           children: description.entries
               .map(
                 (entry) => Text.rich(
-              TextSpan(
-                children: [
                   TextSpan(
-                    text: '${entry.key}: ',
-                    style: const TextStyle(fontSize: 11),
+                    children: [
+                      TextSpan(
+                        text: '${entry.key}: ',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      TextSpan(
+                        text: entry.value,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ],
                   ),
-                  TextSpan(
-                    text: entry.value,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
+                ),
+              )
               .toList(),
         ),
       ),

@@ -40,8 +40,15 @@ class VideoCraftController extends ChangeNotifier {
     required Duration duration,
     CraftFrameRate? frameRate,
   }) {
+    if (duration <= Duration.zero) {
+      throw ArgumentError.value(
+        duration,
+        'duration',
+        'Media duration must be positive.',
+      );
+    }
     final rate = frameRate ?? CraftFrameRate(30, 1);
-    final count = rate
+    final rawCount = rate
         .frameAt(
           CraftTick.fromUnits(
             BigInt.from(duration.inMicroseconds),
@@ -49,6 +56,7 @@ class VideoCraftController extends ChangeNotifier {
           ),
         )
         .toInt();
+    final count = rawCount < 1 ? 1 : rawCount;
     final next = VideoCraftRecipe(
       sourceName: name,
       duration: duration,
@@ -102,9 +110,11 @@ class VideoCraftController extends ChangeNotifier {
   }
 
   void putOpacityKey(double value) {
+    if (!value.isFinite) return;
     final r = _recipe;
     if (r != null) {
-      _commit(r.copyWith(opacityKeys: {...r.opacityKeys, frame: value}));
+      final clamped = value.clamp(0.0, 1.0);
+      _commit(r.copyWith(opacityKeys: {...r.opacityKeys, frame: clamped}));
     }
   }
 

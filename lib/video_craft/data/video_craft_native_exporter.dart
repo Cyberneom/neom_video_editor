@@ -10,6 +10,7 @@ import '../domain/video_craft_source.dart';
 import '../rendering/video_craft_title_renderer.dart';
 import 'video_craft_export_control.dart';
 import 'video_craft_native_render_plan.dart';
+import 'video_craft_url_security.dart';
 
 /// Metadata kept separate from the plugin's model because the Open Neom patch
 /// reports all audio streams (upstream exposes only the first stream's duration).
@@ -393,6 +394,10 @@ class ProVideoCraftTrimExporter implements VideoCraftControlledExporter {
     }
   }
 
+  static const int _maxRedirects = 3;
+
+  static bool isSafePublicVideoUri(Uri uri) => isSafePublicVideoExportUri(uri);
+
   static Future<String> _prepareInput(
     VideoCraftSource source,
     Directory folder,
@@ -410,7 +415,33 @@ class ProVideoCraftTrimExporter implements VideoCraftControlledExporter {
     }
     final uri = source.uri!;
     if (uri.scheme == 'file') {
+      if (uri.authority.isNotEmpty && uri.authority != 'localhost') {
+        throw UnsupportedError('UNC network file paths are not permitted.');
+      }
       final file = File.fromUri(uri);
+      if (isProtectedLocalVideoPath(file.path)) {
+        throw UnsupportedError(
+          'No se permiten rutas locales protegidas o inseguras como origen de vídeo.',
+        );
+      }
+      final entityType = await FileSystemEntity.type(
+        file.path,
+        followLinks: false,
+      );
+      if (entityType == FileSystemEntityType.link ||
+          FileSystemEntity.isLinkSync(file.parent.path)) {
+        throw UnsupportedError(
+          'No se permiten enlaces simbólicos como origen de vídeo.',
+        );
+      }
+      if (entityType == FileSystemEntityType.file) {
+        final resolved = file.resolveSymbolicLinksSync();
+        if (isProtectedLocalVideoPath(resolved)) {
+          throw UnsupportedError(
+            'No se permiten enlaces simbólicos hacia rutas protegidas.',
+          );
+        }
+      }
       final length = await file.length();
       if (length <= 0 || length > maxFileBytes) {
         throw UnsupportedError('El vídeo debe ocupar entre 1 byte y 512 MiB.');
@@ -422,19 +453,61 @@ class ProVideoCraftTrimExporter implements VideoCraftControlledExporter {
         'Abre un archivo local o una URL HTTP(S) de vídeo.',
       );
     }
+    if (!isSafePublicVideoUri(uri)) {
+      throw UnsupportedError(
+        'La URL de vídeo apunta a un destino local o privado bloqueado.',
+      );
+    }
     final client = HttpClient()
       ..connectionTimeout = const Duration(seconds: 30);
     final remove = token.addListener(() => client.close(force: true));
     final file = File('${folder.path}/source.mp4');
     RandomAccessFile? handle;
     try {
-      final request = await client.getUrl(uri);
-      token.throwIfCancelled();
-      final response = await request.close();
-      if (response.statusCode != HttpStatus.ok) {
+      var currentUri = uri;
+      HttpClientResponse? response;
+      for (var hop = 0; hop <= _maxRedirects; hop++) {
+        final request = await client.getUrl(currentUri);
+        request.followRedirects = false;
+        token.throwIfCancelled();
+        final candidate = await request.close();
+        final status = candidate.statusCode;
+        if (status == HttpStatus.movedPermanently ||
+            status == HttpStatus.found ||
+            status == HttpStatus.seeOther ||
+            status == HttpStatus.temporaryRedirect ||
+            status == HttpStatus.permanentRedirect) {
+          await candidate.drain<void>();
+          if (hop == _maxRedirects) {
+            throw HttpException(
+              'El vídeo excedió el límite de redirecciones.',
+              uri: currentUri,
+            );
+          }
+          final location =
+              candidate.headers.value(HttpHeaders.locationHeader)?.trim() ?? '';
+          if (location.isEmpty) {
+            throw HttpException(
+              'No se pudo descargar el vídeo: redirección inválida',
+              uri: currentUri,
+            );
+          }
+          final nextUri = currentUri.resolve(location);
+          if (!isSafePublicVideoUri(nextUri)) {
+            throw UnsupportedError(
+              'Redirección de vídeo bloqueada hacia un destino privado.',
+            );
+          }
+          currentUri = nextUri;
+          continue;
+        }
+        response = candidate;
+        break;
+      }
+      if (response == null || response.statusCode != HttpStatus.ok) {
         throw HttpException(
-          'No se pudo descargar el vídeo: HTTP ${response.statusCode}',
-          uri: uri,
+          'No se pudo descargar el vídeo: HTTP ${response?.statusCode ?? 0}',
+          uri: currentUri,
         );
       }
       if (response.contentLength > maxFileBytes) {

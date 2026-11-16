@@ -35,8 +35,15 @@ void main() {
     });
     final uri = Uri.parse('http://127.0.0.1:${server.port}/video.mp4');
     try {
-      expect(await readProjectUri(uri, 32), List.generate(32, (i) => i));
-      await expectLater(readProjectUri(uri, 31), throwsFormatException);
+      await expectLater(readProjectUri(uri, 32), throwsUnsupportedError);
+      expect(
+        await readProjectUri(uri, 32, allowLoopbackForTest: true),
+        List.generate(32, (i) => i),
+      );
+      await expectLater(
+        readProjectUri(uri, 31, allowLoopbackForTest: true),
+        throwsFormatException,
+      );
       await expectLater(
         readProjectUri(Uri.parse('ftp://localhost/clip.mp4'), 32),
         throwsUnsupportedError,
