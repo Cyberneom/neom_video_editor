@@ -12,7 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  sint: ^2.0.2
+  sint: ^2.3.0
 
   neom_core:
     git:
